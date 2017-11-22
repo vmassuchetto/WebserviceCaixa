@@ -1,34 +1,34 @@
-# Cobrança registrada da Caixa Econômica Federal
+# CobranÃ§a registrada da Caixa EconÃ´mica Federal
 
-Webservice de acesso às operações básicas de consulta, inclusão e alteração
-de cobranças registradas segundo o [manual fornecido pela CEF](doc/MO38239.pdf).
-Existem algumas divergências devido às frequentes modificações no serviço pela
-CEF, mas encontra-se funcional e estável na data de publicação deste código.
+Webservice de acesso Ã s operaÃ§Ãµes bÃ¡sicas de consulta, inclusÃ£o e alteraÃ§Ã£o
+de cobranÃ§as registradas segundo o [manual fornecido pela CEF](doc/MO38239.pdf).
+Existem algumas divergÃªncias devido Ã s frequentes modificaÃ§Ãµes no serviÃ§o pela
+CEF, mas encontra-se funcional e estÃ¡vel na data de publicaÃ§Ã£o deste cÃ³digo.
 
-Trata-se de uma implementação genérica. Regras específicas devem
-ser implementadas à parte como é o caso do método `GeraBoleto`.
+Trata-se de uma implementaÃ§Ã£o genÃ©rica. Regras especÃ­ficas devem
+ser implementadas Ã  parte como Ã© o caso do mÃ©todo `GeraBoleto`.
 
-Compatível com PHP 5.1+
+CompatÃ­vel com PHP 5.1+
 
 ## Modo de uso
 
-1. O atendimento técnico da Caixa Econômica deve fornecer a você os seguintes
+1. O atendimento tÃ©cnico da Caixa EconÃ´mica deve fornecer a vocÃª os seguintes
    arquivos para serem colocados na pasta `xml`:
 
     * `Consulta_Cobranca_Bancaria_Boleto.wsdl`
     * `Manutencao_Cobranca_Bancaria_Externo.wsdl`
 
-   Se você não os tiver, pode acessá-los nas urls e salvar nestes arquivos.
+   Se vocÃª nÃ£o os tiver, pode acessÃ¡-los nas urls e salvar nestes arquivos.
    
     * https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl
     * https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl
 
-2. Modifique as constantes definidas no início do arquivo
+2. Modifique as constantes definidas no inÃ­cio do arquivo
    `WebserviceCaixa.php`.
 
-3. Verifique os métodos `Consulta`, `Inclui` e `Altera` para verificar quais
-   parâmetros devem ser inseridos. Para a relação completa de opções Verifique
-   o manual da Caixa Econômica Federal.
+3. Verifique os mÃ©todos `Consulta`, `Inclui` e `Altera` para verificar quais
+   parÃ¢metros devem ser inseridos. Para a relaÃ§Ã£o completa de opÃ§Ãµes, verifique
+   o [manual da Caixa EconÃ´mica Federal](doc/MO38239.pdf).
 
 ```php
 include('./WebServiceCaixa/WebserviceCaixa.php');
@@ -62,12 +62,13 @@ $ws = new WebserviceCaixa($parametros);
 $ws->Gera();
 ```
 
-## Geração de boletos
+## GeraÃ§Ã£o de boletos
 
 ### PDF gerado pela Caixa
 
-O retorno do webservice contém uma URL para um PDF que pode ser utilizada,
-embora nem sempre ele esteja disponível.
+O retorno do webservice contÃ©m um URL para um PDF que pode ser utilizado,
+embora nem sempre ele esteja disponÃ­vel. Nossa experiÃªncia com este
+serviÃ§o Ã© de forte instabilidade.
 
 ```html
 <a href="<?php echo $ws->GetUrlBoleto($boleto) ?>">Link para o boleto</a>
@@ -80,7 +81,7 @@ exit();
 
 ### BoletoPHP
 
-Recomenda-se gerar o seu próprio boleto após a realização das operações usando
+Recomenda-se gerar o seu prÃ³prio boleto apÃ³s a realizaÃ§Ã£o das operaÃ§Ãµes usando
 o [BoletoPHP](https://github.com/CobreGratis/boletophp), por exemplo:
 
 ```php
@@ -148,7 +149,7 @@ exit();
 
 ## Debug
 
-Informações da consulta podem ser verificadas acessando a variável GET `DEBUG`
-e um `HASH_DEBUG` secreto na URL:
+InformaÃ§Ãµes da consulta e conteÃºdo do retorno podem ser verificadas
+acessando a variÃ¡vel GET `DEBUG` e um `HASH_DEBUG` secreto na URL:
 
     http://seusite.com/seuscript.php?DEBUG=8a7478ca4d29abecb82118cc089fc7c057b0d0872a34d0ee1400b2076258f67
