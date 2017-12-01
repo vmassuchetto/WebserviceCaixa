@@ -161,11 +161,11 @@ class WebserviceCaixa {
 
 			$response = $client->call($operacao, $conteudo, $retries);
 			$err = $client->getError();
-			
+
 			if ($this->dev)
 				$this->debug['RETORNO_CAIXA'][] = array(
-					'RESPOSTA' => $response,
-					'ERRO' => $err
+					'ERRO' => $err,
+					'RESPOSTA' => htmlspecialchars($client->response)
 				);
 
 			if (!$client->fault && !$err) {
