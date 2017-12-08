@@ -1,13 +1,13 @@
 <?php
 /**
- * Consulta e registro de boletos da Caixa EconÙmica Federal
+ * Consulta e registro de boletos da Caixa Econ√¥mica Federal
  *
- * Estrutura de diretÛrios:
+ * Estrutura de diret√≥rios:
  *
  *   /
  *     |-- /lib                   Bibliotecas utilizadas
  *     |-- /xml                   Arquivos WSDL e XSD enviados pela CEF
- *     |-- webservice-caixa.php   Biblioteca
+ *     |-- WebserviceCaixa.php    Biblioteca
  *
  * Exemplo de uso:
  *
@@ -17,22 +17,22 @@
  *
  */
 
-define('RETRIES',  20);                 // n˙mero de tentativas de conex„o com o WS antes de falhar
+define('RETRIES',  20);                 // n√∫mero de tentativas de conex√£o com o WS antes de falhar
 define('TIMEOUT',  5);                  // timeout para desistir da resposta
 define('INTERVAL', 1.5);                // intervalo entre tentativas
 
-// informaÁıes que ser„o impressas no cabeÁalho do boleto
+// informa√ß√µes que ser√£o impressas no cabe√ßalho do boleto
 define('CEDENTE', 'NOME DO CEDENTE');
 define('IDENTIFICACAO', 'IDENTIFICACAO DO CEDENTE NO CABECALHO');
 define('CNPJ', '999999999999999');
 define('ENDERECO1', 'PRIMEIRA LINHA DE ENDERECO');
 define('ENDERECO2', 'SEGUNDA LINHA DE ENDERECO');
 
-define('UNIDADE', '9999');			// cÛdigo de agÍncia de relacionamento
+define('UNIDADE', '9999');			// c√≥digo de ag√™ncia de relacionamento
 
-define('HASH_DEBUG', 'HASH SECRETO PARA DEBUG'); // exibe informaÁıes do boleto quando `?hash=` È informado
+define('HASH_DEBUG', 'HASH SECRETO PARA DEBUG'); // exibe informa√ß√µes do boleto quando `?hash=` √© informado
 
-define('DIR', 'WebserviceCaixa'); // diretÛrio do servidor em que este arquivo È colocado
+define('DIR', 'WebserviceCaixa'); // diret√≥rio do servidor em que este arquivo √© colocado
 
 include(dirname(__FILE__) . '/lib/nusoap/lib/nusoap.php');
 include(dirname(__FILE__) . '/lib/XmlDomConstruct.php');
@@ -43,18 +43,18 @@ class WebserviceCaixa {
 	var $consulta;
 
 	/**
-	 * Construtor atribui e formata par‚metros em $this->args
+	 * Construtor atribui e formata par√¢metros em $this->args
 	 */
 	function __construct($args) {
 
 		// Ambiente de desenvolvimento ou $_GET['DEBUG'] informado adequadamente
 		$this->dev = isset($_GET['DEBUG']) && $_GET['DEBUG'] == HASH_DEBUG);
 		
-		// LocalizaÁ„o HTTP dos arquivos WSDL
+		// Localiza√ß√£o HTTP dos arquivos WSDL
 		$this->wsdl_consulta = $this->GetBaseUrl() . DIR . '/xml/Consulta_Cobranca_Bancaria_Boleto.wsdl';
 		$this->wsdl_manutencao = $this->GetBaseUrl() . DIR . '/xml/Manutencao_Cobranca_Bancaria_Externo.wsdl';
 
-		// Campos padrıes
+		// Campos padr√µes
 		$padroes = array(
 			'IDENTIFICADOR_ORIGEM' => $_SERVER['REMOTE_ADDR'],
 			'UNIDADE' => UNIDADE
@@ -62,7 +62,7 @@ class WebserviceCaixa {
 		
 		$this->args = $this->CleanArray(array_merge($padroes,$args));
 		
-		// InformaÁıes acessÌveis aos getters
+		// Informa√ß√µes acess√≠veis aos getters
 		$this->consulta['CEDENTE'] = CEDENTE;
 		$this->consulta['IDENTIFICACAO'] = IDENTIFICACAO;
 		$this->consulta['ENDERECO1'] = ENDERECO1;
@@ -88,11 +88,11 @@ class WebserviceCaixa {
 	 */
 	function CleanString($str) {
 		$replaces = array(
-			'S'=>'S', 's'=>'s', 'Z'=>'Z', 'z'=>'z', '¿'=>'A', '¡'=>'A', '¬'=>'A', '√'=>'A', 'ƒ'=>'A', '≈'=>'A', '∆'=>'A', '«'=>'C', '»'=>'E', '…'=>'E',
-			' '=>'E', 'À'=>'E', 'Ã'=>'I', 'Õ'=>'I', 'Œ'=>'I', 'œ'=>'I', '—'=>'N', '“'=>'O', '”'=>'O', '‘'=>'O', '’'=>'O', '÷'=>'O', 'ÿ'=>'O', 'Ÿ'=>'U',
-			'⁄'=>'U', '€'=>'U', '‹'=>'U', '›'=>'Y', 'ﬁ'=>'B', 'ﬂ'=>'Ss', '‡'=>'a', '·'=>'a', '‚'=>'a', '„'=>'a', '‰'=>'a', 'Â'=>'a', 'Ê'=>'a', 'Á'=>'c',
-			'Ë'=>'e', 'È'=>'e', 'Í'=>'e', 'Î'=>'e', 'Ï'=>'i', 'Ì'=>'i', 'Ó'=>'i', 'Ô'=>'i', ''=>'o', 'Ò'=>'n', 'Ú'=>'o', 'Û'=>'o', 'Ù'=>'o', 'ı'=>'o',
-			'ˆ'=>'o', '¯'=>'o', '˘'=>'u', '˙'=>'u', '˚'=>'u', '˝'=>'y', '˛'=>'b', 'ˇ'=>'y'
+			'S'=>'S', 's'=>'s', 'Z'=>'Z', 'z'=>'z', '√Ä'=>'A', '√Å'=>'A', '√Ç'=>'A', '√É'=>'A', '√Ñ'=>'A', '√Ö'=>'A', '√Ü'=>'A', '√á'=>'C', '√à'=>'E', '√â'=>'E',
+			'√ä'=>'E', '√ã'=>'E', '√å'=>'I', '√ç'=>'I', '√é'=>'I', '√è'=>'I', '√ë'=>'N', '√í'=>'O', '√ì'=>'O', '√î'=>'O', '√ï'=>'O', '√ñ'=>'O', '√ò'=>'O', '√ô'=>'U',
+			'√ö'=>'U', '√õ'=>'U', '√ú'=>'U', '√ù'=>'Y', '√û'=>'B', '√ü'=>'Ss', '√†'=>'a', '√°'=>'a', '√¢'=>'a', '√£'=>'a', '√§'=>'a', '√•'=>'a', '√¶'=>'a', '√ß'=>'c',
+			'√®'=>'e', '√©'=>'e', '√™'=>'e', '√´'=>'e', '√¨'=>'i', '√≠'=>'i', '√Æ'=>'i', '√Ø'=>'i', '√∞'=>'o', '√±'=>'n', '√≤'=>'o', '√≥'=>'o', '√¥'=>'o', '√µ'=>'o',
+			'√∂'=>'o', '√∏'=>'o', '√π'=>'u', '√∫'=>'u', '√ª'=>'u', '√Ω'=>'y', '√æ'=>'b', '√ø'=>'y'
 		);
 		
 		return preg_replace('/[^0-9A-Za-z;,.\- ]/', '', strtoupper(strtr(trim($str), $replaces)));
@@ -109,16 +109,16 @@ class WebserviceCaixa {
 	/**
 	 * Formata uma mensagem de erro na tela
 	 *
-	 * @param $txt Exibido ao usu·rio
+	 * @param $txt Exibido ao usu√°rio
 	 * @param $log Exibido ao desenvolvedor quando em ambiente de
-	 *             desenvolvimento ou quando $_GET['DEBUG'] È passado
+	 *             desenvolvimento ou quando $_GET['DEBUG'] √© passado
 	 *             adequadamente
 	 */
 	function ExibeErro($txt = '') {
 		if ($txt == 'INDISP') {
-			$txt = 'O sistema de boletos da Caixa EconÙmica Federal encontra-se indisponÌvel. Tente acessar o link mais tarde.';
+			$txt = 'O sistema de boletos da Caixa Econ√¥mica Federal encontra-se indispon√≠vel. Tente acessar o link mais tarde.';
 		} else if ($txt == '') {
-			$txt = "Houve um erro ao gerar o boleto. Por favor, visite esta p·gina mais tarde.";
+			$txt = "Houve um erro ao gerar o boleto. Por favor, visite esta p√°gina mais tarde.";
 		}
 		if ($this->dev) {
 			ob_start();
@@ -144,9 +144,9 @@ class WebserviceCaixa {
 	/**
 	 * Encapsulamento da chamada do NuSOAP ao WebService
 	 *
-	 * Devido ‡ instabilidade do serviÁo, faz consultas repetidas atÈ o
-	 * n˙mero de tentativas definido em RETRIES. Deve ser usado ao invÈs do
-	 * mÈtodo `nusoap_client->call` da biblioteca.
+	 * Devido √† instabilidade do servi√ßo, faz consultas repetidas at√© o
+	 * n√∫mero de tentativas definido em RETRIES. Deve ser usado ao inv√©s do
+	 * m√©todo `nusoap_client->call` da biblioteca.
 	 */
 	function CallNuSOAP($wsdl, $operacao, $conteudo) {
 		$client = new nusoap_client($wsdl, $wsdl = true, $timeout = TIMEOUT);
@@ -182,29 +182,29 @@ class WebserviceCaixa {
 	 * Faz a chamada ao WebService verificando as mensagens de erro
 	 * documentadas no manual.
 	 *
-	 * CÛdigo de retorno '02' s„o erros indisponibilidade na ponta (P·g. 35)
+	 * C√≥digo de retorno '02' s√£o erros indisponibilidade na ponta (P√°g. 35)
 	 *
-	 * Demais cÛdigos de retorno (P·gs. 33 a 35) devem ser checados pela
-	 * rotina que invoca este mÈtodo
+	 * Demais c√≥digos de retorno (P√°gs. 33 a 35) devem ser checados pela
+	 * rotina que invoca este m√©todo
 	 */
 	function Call($wsdl, $operacao, $conteudo) {
 		$response = $this->CallNusoap($wsdl, $operacao, $conteudo);
 		$codret = $this->GetCodigoRetorno($response);
 
-		// CÛdigo 0 = operaÁ„o efetuada
+		// C√≥digo 0 = opera√ß√£o efetuada
 		if ($codret === '0')
 			return $response;
 
-		/* Erros prÛprios de sistema (P·g. 35) que acarretam em erros fatais
-		 *   - CÛdigo 02 = sistema indisponÌvel
-		 *   - CÛdigo X5 = formataÁ„o de mensagem
+		/* Erros pr√≥prios de sistema (P√°g. 35) que acarretam em erros fatais
+		 *   - C√≥digo 02 = sistema indispon√≠vel
+		 *   - C√≥digo X5 = formata√ß√£o de mensagem
 		 */
 		$cod_erros = array('02', 'X5');
 		if (isset($response['COD_RETORNO']) && in_array($response['COD_RETORNO'], $cod_erros)) {
 			$this->ExibeErro('INDISP');
 		}
 
-		/* Erros de negÛcio (P·gs. 33 a 35) que devem ser tratados pela
+		/* Erros de neg√≥cio (P√°gs. 33 a 35) que devem ser tratados pela
 		 * rotina que invoca esta chamada
 		 */
 		if (isset($response['DADOS']['CONTROLE_NEGOCIAL']['MENSAGENS']['RETORNO'])) {
@@ -220,7 +220,7 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * C·lculo do Hash de autenticaÁ„o segundo p·gina 7 do manual.
+	 * C√°lculo do Hash de autentica√ß√£o segundo p√°gina 7 do manual.
 	 */
 	function HashAutenticacao($args) {
 		$raw = preg_replace('/[^A-Za-z0-9]/', '',
@@ -235,7 +235,7 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * ConstruÁ„o do documento XML para consultas.
+	 * Constru√ß√£o do documento XML para consultas.
 	 */
 	function ConsultaXML($args) {
 		$xml_root = 'consultacobrancabancaria:SERVICO_ENTRADA';
@@ -259,7 +259,7 @@ class WebserviceCaixa {
 	/**
 	 * Prepara e executa consultas
 	 *
-	 * Par‚metros mÌnimos para que o boleto possa ser consultado.
+	 * Par√¢metros m√≠nimos para que o boleto possa ser consultado.
 	 */
 	function Consulta($args) {
 		$args = array_merge($this->args, $args);
@@ -298,9 +298,9 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * ConstruÁ„o do documento XML para operaÁıes de manutenÁ„o
+	 * Constru√ß√£o do documento XML para opera√ß√µes de manuten√ß√£o
 	 *
-	 * OperaÁıes de inclus„o e alteraÁ„o
+	 * Opera√ß√µes de inclus√£o e altera√ß√£o
 	 */
 	function ManutencaoXml($args) {
 		$xml_root = 'manutencaocobrancabancaria:SERVICO_ENTRADA';
@@ -322,7 +322,7 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Prepara e executa inclusıes e alteraÁıes de boleto
+	 * Prepara e executa inclus√µes e altera√ß√µes de boleto
 	 *
 	 * @param str $operacao INCLUI_BOLETO ou ALTERA_BOLETO
 	 */
@@ -332,9 +332,9 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Realiza a operaÁ„o de inclus„o
+	 * Realiza a opera√ß√£o de inclus√£o
 	 *
-	 * Par‚metros mÌnimos para que o boleto possa ser incluÌdo.
+	 * Par√¢metros m√≠nimos para que o boleto possa ser inclu√≠do.
 	 */
 	function Inclui($args) {
 		$args = array_merge($this->args, $args);
@@ -382,9 +382,9 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Realiza a operaÁ„o de alteraÁ„o
+	 * Realiza a opera√ß√£o de altera√ß√£o
 	 *
-	 * Par‚metros mÌnimos para que o boleto possa ser alterado.
+	 * Par√¢metros m√≠nimos para que o boleto possa ser alterado.
 	 */
 	function Altera($args) {
 		$args = array_merge($this->args, $args);
@@ -429,7 +429,7 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * ObtÈm o cÛdigo de retorno com o status das respostas do webservice
+	 * Obt√©m o c√≥digo de retorno com o status das respostas do webservice
 	 */
 	function GetCodigoRetorno($response) {
 		if (isset($response['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO']))
@@ -439,7 +439,7 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * ObtÈm url para impress„o do boleto
+	 * Obt√©m url para impress√£o do boleto
 	 */
 	function GetUrlBoleto($response) {
 		if (isset($response['DADOS']['CONSULTA_BOLETO']['TITULO']['URL']))
@@ -451,21 +451,21 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Verifica se o link est· funcional
+	 * Verifica se o link est√° funcional
 	 */
 	function ChecaUrl($url) {
 		$headers = get_headers($url);
 		if (preg_match('/HTTP\/1.1 500.*/', $headers[0]))
-			$this->ExibeErro('Boleto indisponÌvel. N„o foi possÌvel recuperar o <a target="_blank" href="' . $url . '">link de impress„o</a> da CEF.');
+			$this->ExibeErro('Boleto indispon√≠vel. N√£o foi poss√≠vel recuperar o <a target="_blank" href="' . $url . '">link de impress√£o</a> da CEF.');
 	}
 
 	/**
-	 * Wrapper para geraÁ„o de boletos que deve ser utilizada externamente
+	 * Wrapper para gera√ß√£o de boletos que deve ser utilizada externamente
 	 * regida por $args['FORMATO_RETORNO']
-	 *     - ARRAY retorna informaÁıes do boleto em vetor associativo
-	 *     - REDIRECIONAMENTO envia o usu·rio para o PDF da Caixa na fonte
+	 *     - ARRAY retorna informa√ß√µes do boleto em vetor associativo
+	 *     - REDIRECIONAMENTO envia o usu√°rio para o PDF da Caixa na fonte
 	 *     - URL string da url do boleto da Caixa
-	 *     - DADOS string de dados bin·rios do boleto da Caixa
+	 *     - DADOS string de dados bin√°rios do boleto da Caixa
 	 */
 	function Gera() {
 		$boleto = $this->GeraBoleto();
@@ -494,11 +494,16 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * GeraÁ„o dos boletos como exemplo segundo regra especÌfica:
+	 * Gera√ß√£o dos boletos como exemplo segundo regra espec√≠fica, deve
+	 * ser alterado de acordo com a necessidade do neg√≥cio
 	 *
-	 *   * se existe e est· dentro do prazo de validade, n„o faz nada
-	 *   * se existe e est· fora do prazo de validade, altera data para hoje
-	 *   * se n„o existe, inclui um novo
+	 * Neste exemplo:
+	 *  - se cobran√ßa est√° registrada e dentro do prazo de validade,
+	 *    somente retorna as informa√ß√µes
+	 *  - se cobran√ßa est√° registrada e fora do prazo de validade, altera
+	 *    data para hoje sem mudan√ßa de valor -- c√°lculo de juros incidiria
+	 *    nesta situa√ß√£o
+	 *  - realiza a inclus√£o se a cobran√ßa n√£o est√° registrada
 	 */
 	function GeraBoleto() {
 		$consulta = $this->Consulta($this->args);
@@ -508,34 +513,33 @@ class WebserviceCaixa {
 		if ($codret == 0) {
 			$vencimento = strtotime($consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_VENCIMENTO']);
 
-			// Dentro do prazo, somente retorna informaÁıes
+			// Dentro do prazo, somente retorna informa√ß√µes
 			if ($vencimento >= strtotime('today'))
 				return $consulta;
 
+			$this->args['DATA_VENCIMENTO'] = strtotime('today');
 			$altera = $this->Altera($this->args);
 			if ($this->GetCodigoRetorno($altera) == 0)
 				return $altera;
 
-			// SituaÁıes em que se deve registrar um novo nosso n˙mero
+			/*
+			 * Situa√ß√µes em que se deve registrar um novo nosso n√∫mero
+			 * e que s√≥ s√£o informadas no retorno da requisi√ß√£o de altera√ß√£o
+			 */
 			$cods = array(
 				47, // NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
 				48, // ALTERACAO NAO PERMITIDA - APENAS TITULOS "EM ABERTO" PODEM SER ALTERADOS
 			);
 			if (in_array($altera['COD_RETORNO'], $cods)) {
-				// Par‚metro '1' ao final indica que um novo NOSSO_NUMERO deve ser gerado
-				// aqui devem ser inseridas novas informaÁıes da baixa para alteraÁ„o
-				// do boleto
 				/*
-				$baixado_args = array();
-				$baixado = $this->Altera($baixado_args);
-				if ($this->GetCodigoRetorno($baixado) == 0)
-					return $baixado;
+				$novo_nn = $this->Altera(array('NOSSO_NUMERO' => RotinaQueObtemNovoNossoNumero()));
+				if ($this->GetCodigoRetorno($novo_nn) == 0)
+					return $boleto;
 				*/
 			}
-
 		}
 
-		// Boleto n„o registrado
+		// Boleto n√£o registrado
 		if ($codret == 1) {
 			$this->Inclui($this->args);
 			return $this->Consulta($this->args);
@@ -544,6 +548,7 @@ class WebserviceCaixa {
 	}
 	
 	/*** Getters ***/
+	
 	function GetCedente()            { return $this->consulta['CEDENTE']; }
 	function GetIdentificacao()      { return $this->consulta['IDENTIFICACAO']; }
 	function GetCnpj()               { return $this->consulta['CNPJ']; }
