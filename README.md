@@ -62,6 +62,38 @@ $ws = new WebserviceCaixa($parametros);
 $ws->Gera();
 ```
 
+## Consulta de títulos
+
+Você pode conferir se as operações do WebService estão corretas usando
+o sistema [e-Cobrança](doc/ecobranca-consulta-titulos.png) da Caixa.
+Acesse ""Banco de títulos > Consulta de títulos", deixe o formulário em
+branco e clique em "Consultar" para exibir todos os títulos.
+
+![Consulta de títulos no e-Cobrança](doc/ecobranca-consulta-titulos.png)
+
+## Erros de retorno
+
+Tentando complementar as informações do [manual](doc/MO38239.pdf) (pág. 34)
+sobre os códigos de erro mais comuns:
+
+`X5 -- TRANSAÇÃO TEMPORARIAMENTE INDISPONÍVEL`: O sistema da Caixa está
+indisponível. Isto já ocorreu algumas vezes e deve ocorrer novamente sem
+nenhum tipo de aviso prévio. Se você entrar em contato com o HelpDesk eles
+podem dizer que está tudo bem e que o serviço está operante, mas
+obviamente não está. O melhor a fazer infelizmente é aguardar.
+
+`X5 -- USUARIO NAO AUTORIZADO A EXECUTAR A TRANSACAO`: Quando tem algum
+algum erro na geração do hash de autenticação, ou a Caixa ainda não liberou
+o CPF ou CNPJ para acesso ao WebService. Verifique no manual se as variáveis
+`CODIGO_BENEFICIARIO` e `NOSSO_NUMERO` estão corretas e com o tamanho
+correto. Tente também ligar no atendimento da Caixa e perguntar se estes
+códigos estão liberados. Alguns casos são resolvidos somente com o Gerente
+da conta.
+
+`47 -- NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO`: O cálculo do hash
+de autenticação está correto, mas o `NOSSO_NUMERO` consultado não consta no
+convênio informado.
+
 ## Geração de boletos
 
 ### PDF gerado pela Caixa
