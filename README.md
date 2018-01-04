@@ -62,6 +62,14 @@ $ws = new WebserviceCaixa($parametros);
 $ws->Gera();
 ```
 
+## Depuração
+
+Todas as tentativas de transação com o WebService e seus conteúdos podem
+ser verificados ao adicionar a variável GET `DEBUG` igual à constante
+[`HASH_DEBUG`](https://github.com/vmassuchetto/WebserviceCaixa/blob/a8c2335725d91e004b2f210dd15249770b4f0bd4/WebserviceCaixa.php#L33) na URL:
+
+    http://seusite.com/seuscript.php?DEBUG=8a7478ca4d29abecb82118cc089fc7c057b0d0872a34d0ee1400b2076258f67
+
 ## Consulta de títulos
 
 Você pode conferir se as operações do WebService estão corretas usando
@@ -178,10 +186,3 @@ if ($ws->dev)
 
 exit();
 ```
-
-## Debug
-
-Informações da consulta e conteúdo do retorno podem ser verificadas
-acessando a variável GET `DEBUG` e um `HASH_DEBUG` secreto na URL:
-
-    http://seusite.com/seuscript.php?DEBUG=8a7478ca4d29abecb82118cc089fc7c057b0d0872a34d0ee1400b2076258f67
