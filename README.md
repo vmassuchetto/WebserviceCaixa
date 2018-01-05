@@ -16,18 +16,34 @@ Compatível com PHP 5.1+
    arquivos para serem colocados na pasta `xml`:
 
     * `Consulta_Cobranca_Bancaria_Boleto.wsdl`
+    * `Consulta_Cobranca_Bancaria_Boleto.xsd`
+    * `EmiteBoleto.xsd`
     * `Manutencao_Cobranca_Bancaria_Externo.wsdl`
+    * `Manutencao_Cobranca_Bancaria_Boleto_Externo.xsd`
+    * `MensagensBarramento.xsd`
 
-   Se você não os tiver, pode acessá-los nas urls e salvar nestes arquivos.
-   
-    * https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl
-    * https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl
-   
-   Caso queira utilizar estes WSDLs em produção, é preciso remover o prefixo `des.`
-   das URLs nele presentes:
-   
-   * `sed -i.bak s/http:\/\/\.des/http:\/\//g Consulta_Cobranca_Bancaria_Boleto.wsdl`
-   * `sed -i.bak s/http:\/\/\.des/http:\/\//g Manutencao_Cobranca_Bancaria_Externo.wsdl`
+   Se você não os tiver, pode baixar as versões de desenvolvimento e modificar os
+   caminhos dos arquivos para apontar para os caminhos locais:
+
+```
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl" -o "Consulta_Cobranca_Bancaria_Boleto.wsdl"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd0" -o "Consulta_Cobranca_Bancaria_Boleto0.xsd"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd1" -o "Consulta_Cobranca_Bancaria_Boleto1.xsd"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl" -o "Manutencao_Cobranca_Bancaria_Externo.wsdl"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd0" -o "Manutencao_Cobranca_Bancaria_Boleto_Externo0.xsd"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd1" -o "Manutencao_Cobranca_Bancaria_Boleto_Externo1.xsd"
+curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd2" -o "Manutencao_Cobranca_Bancaria_Boleto_Externo2.xsd"
+
+for i in *; do
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl,Consulta_Cobranca_Bancaria_Boleto.wsdl,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd0,Consulta_Cobranca_Bancaria_Boleto0.xsd,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd1,Consulta_Cobranca_Bancaria_Boleto1.xsd,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl,Manutencao_Cobranca_Bancaria_Externo.wsdl,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd0,Manutencao_Cobranca_Bancaria_Boleto_Externo0.xsd,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd1,Manutencao_Cobranca_Bancaria_Boleto_Externo1.xsd,g' $i
+   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd2,Manutencao_Cobranca_Bancaria_Boleto_Externo2.xsd,g' $i
+done
+```
 
 2. Modifique as constantes definidas no início do arquivo
    `WebserviceCaixa.php`.
