@@ -22,9 +22,25 @@ Compatível com PHP 5.1+
    
     * https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl
     * https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl
+   
+   Caso queira utilizar estes WSDLs em produção, é preciso remover o prefixo `des.`
+   das URLs nele presentes:
+   
+   * `sed -i.bak s/http:\/\/\.des/http:\/\//g Consulta_Cobranca_Bancaria_Boleto.wsdl`
+   * `sed -i.bak s/http:\/\/\.des/http:\/\//g Manutencao_Cobranca_Bancaria_Externo.wsdl`
 
 2. Modifique as constantes definidas no início do arquivo
    `WebserviceCaixa.php`.
+   
+```php
+define('CEDENTE', 'NOME DO CEDENTE');
+define('IDENTIFICACAO', 'IDENTIFICACAO DO CEDENTE NO CABECALHO');
+define('CNPJ', '999999999999999');
+define('ENDERECO1', 'PRIMEIRA LINHA DE ENDERECO');
+define('ENDERECO2', 'SEGUNDA LINHA DE ENDERECO');
+define('UNIDADE', '9999');
+define('HASH_DEBUG', 'HASH SECRETO PARA DEBUG');
+```
 
 3. Verifique os métodos `Consulta`, `Inclui` e `Altera` para verificar quais
    parâmetros devem ser inseridos. Para a relação completa de opções, verifique
