@@ -25,7 +25,9 @@ Compatível com PHP 5.1+
    Se você não os tiver, pode baixar as versões de desenvolvimento e modificar os
    caminhos dos arquivos para apontar para os caminhos locais:
 
-```
+```bash
+cd xml
+
 curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl" -o "Consulta_Cobranca_Bancaria_Boleto.wsdl"
 curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd0" -o "Consulta_Cobranca_Bancaria_Boleto0.xsd"
 curl -sk "https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd1" -o "Consulta_Cobranca_Bancaria_Boleto1.xsd"
@@ -35,14 +37,22 @@ curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/B
 curl -sk "https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd2" -o "Manutencao_Cobranca_Bancaria_Boleto_Externo2.xsd"
 
 for i in *; do
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl,Consulta_Cobranca_Bancaria_Boleto.wsdl,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd0,Consulta_Cobranca_Bancaria_Boleto0.xsd,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd1,Consulta_Cobranca_Bancaria_Boleto1.xsd,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl,Manutencao_Cobranca_Bancaria_Externo.wsdl,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd0,Manutencao_Cobranca_Bancaria_Boleto_Externo0.xsd,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd1,Manutencao_Cobranca_Bancaria_Boleto_Externo1.xsd,g' $i
-   sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd2,Manutencao_Cobranca_Bancaria_Boleto_Externo2.xsd,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?wsdl,Consulta_Cobranca_Bancaria_Boleto.wsdl,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd0,Consulta_Cobranca_Bancaria_Boleto0.xsd,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto?xsd=xsd1,Consulta_Cobranca_Bancaria_Boleto1.xsd,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?wsdl,Manutencao_Cobranca_Bancaria_Externo.wsdl,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd0,Manutencao_Cobranca_Bancaria_Boleto_Externo0.xsd,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd1,Manutencao_Cobranca_Bancaria_Boleto_Externo1.xsd,g' $i
+    sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto?xsd=xsd2,Manutencao_Cobranca_Bancaria_Boleto_Externo2.xsd,g' $i
 done
+```
+
+   Se for utilizar para produção, modifique também o endereço do barramento de
+   requisições dos arquivos WSDL:
+   
+```bash
+sed -i 's,https://des.barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto,https://barramento.caixa.gov.br/sibar/ConsultaCobrancaBancaria/Boleto,g' Consulta_Cobranca_Bancaria_Boleto.wsdl
+sed -i 's,https://des.barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto,https://barramento.caixa.gov.br/sibar/ManutencaoCobrancaBancaria/Boleto,g' Manutencao_Cobranca_Bancaria_Externo.wsdl
 ```
 
 2. Modifique as constantes definidas no início do arquivo
