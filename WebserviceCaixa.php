@@ -48,7 +48,7 @@ class WebserviceCaixa {
 	function __construct($args) {
 
 		// Ambiente de desenvolvimento ou $_GET['DEBUG'] informado adequadamente
-		$this->dev = isset($_GET['DEBUG']) && $_GET['DEBUG'] == HASH_DEBUG);
+		$this->dev = isset($_GET['DEBUG']) && ($_GET['DEBUG'] == HASH_DEBUG);
 		
 		// Localização HTTP dos arquivos WSDL
 		$this->wsdl_consulta = $this->GetBaseUrl() . DIR . '/xml/Consulta_Cobranca_Bancaria_Boleto.wsdl';
