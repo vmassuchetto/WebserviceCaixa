@@ -68,8 +68,8 @@ define('UNIDADE', '9999');
 define('HASH_DEBUG', 'HASH SECRETO PARA DEBUG');
 ```
 
-3. Verifique os métodos `Consulta`, `Inclui` e `Altera` para verificar quais
-   parâmetros devem ser inseridos. Para a relação completa de opções, verifique
+3. Revise os métodos `Consulta`, `Inclui` e `Altera` para verificar quais
+   parâmetros devem ser fornecidos. Para a relação completa de opções, consulte
    o [manual da Caixa Econômica Federal](doc/MO38239.pdf).
 
 ```php
@@ -126,23 +126,26 @@ branco e clique em "Consultar" para exibir todos os títulos.
 Tentando complementar as informações do [manual](doc/MO38239.pdf) (pág. 34)
 sobre os códigos de erro mais comuns:
 
-`X5 -- TRANSAÇÃO TEMPORARIAMENTE INDISPONÍVEL`: O sistema da Caixa está
-indisponível. Isto já ocorreu algumas vezes e deve ocorrer novamente sem
-nenhum tipo de aviso prévio. Se você entrar em contato com o HelpDesk eles
-podem dizer que está tudo bem e que o serviço está operante, mas
-obviamente não está. O melhor a fazer infelizmente é aguardar.
+### X5 -- TRANSAÇÃO TEMPORARIAMENTE INDISPONÍVEL
 
-`X5 -- USUARIO NAO AUTORIZADO A EXECUTAR A TRANSACAO`: Quando tem algum
-algum erro na geração do hash de autenticação, ou a Caixa ainda não liberou
-o CPF ou CNPJ para acesso ao WebService. Verifique no manual se as variáveis
-`CODIGO_BENEFICIARIO` e `NOSSO_NUMERO` estão corretas e com o tamanho
-correto. Tente também ligar no atendimento da Caixa e perguntar se estes
+O sistema da Caixa está indisponível. Isto já ocorreu algumas vezes e deve
+ocorrer novamente sem nenhum tipo de aviso prévio. Se você entrar em contato
+com o HelpDesk eles podem dizer que está tudo bem e que o serviço está
+operante, mas obviamente não está. O melhor a fazer infelizmente é aguardar.
+
+### X5 -- USUARIO NAO AUTORIZADO A EXECUTAR A TRANSACAO
+
+Quando tem algum algum erro na geração do hash de autenticação, ou a Caixa
+ainda não liberou o CPF ou CNPJ para acesso ao WebService. Verifique no manual
+se as variáveis `CODIGO_BENEFICIARIO` e `NOSSO_NUMERO` estão corretas e com o
+tamanho correto. Tente também ligar no atendimento da Caixa e perguntar se estes
 códigos estão liberados. Alguns casos são resolvidos somente com o Gerente
 da conta.
 
-`47 -- NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO`: O cálculo do hash
-de autenticação está correto, mas o `NOSSO_NUMERO` consultado não consta no
-convênio informado.
+### 47 -- NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
+
+O cálculo do hash de autenticação está correto, mas o `NOSSO_NUMERO` consultado
+não consta no convênio informado.
 
 ## Geração de boletos
 
