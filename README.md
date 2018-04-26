@@ -22,8 +22,8 @@ Compatível com PHP 5.1+
     * `Manutencao_Cobranca_Bancaria_Boleto_Externo.xsd`
     * `MensagensBarramento.xsd`
 
-   Se você não os tiver, pode baixar as versões de desenvolvimento e modificar os
-   caminhos dos arquivos para apontar para os caminhos locais:
+   Se você não os tiver, é possível baixar as versões de desenvolvimento e modificar os
+   caminhos dos arquivos para apontar para os caminhos locais.
 
 ```bash
 cd xml
@@ -121,19 +121,59 @@ branco e clique em "Consultar" para exibir todos os títulos.
 
 ![Consulta de títulos no e-Cobrança](doc/ecobranca-consulta-titulos.png)
 
-## Erros de retorno
+## Mensagens de erro
+
+Os erros de retorno são verborrágicos, mas podem oferecer informações úteis
+sobre os problemas de uma requisição. Geralmente a informação relevante fica
+no final da mensagem. Tem que inspecionar com paciência.
+
+```soap
+      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+        [...]
+        <soapenv:Body>
+        [..]
+        <DADOS>
+        <EXCECAO>
+          EXCECAO NO BAR_MANUTENCAO_COBRANCA_BANCARIA_WS.SOAPInput_Empresas_Externas.
+          DETALHES:
+            ParserException(1) - Funcao: ImbDataFlowNode::createExceptionList,
+            Texto Excecao: Node throwing exception, Texto de Insercao
+            (1) - BAR_MANUTENCAO_COBRANCA_BANCARIA_WS.SOAPInput_Empresas_Externas.ParserException
+            (2) - Funcao: ImbSOAPInputNode::validateData, Texto Excecao: Error occurred in ImbSOAPInputHelper::validateSOAPInput(), Texto de Insercao(1) - BAR_MANUTENCAO_COBRANCA_BANCARIA_WS.SOAPInput_Empresas_Externas.ParserException
+            (3) - Funcao: ImbRootParser::parseNextItem, Texto Excecao: Exception whilst parsing.ParserException
+            (4) - Funcao: ImbSOAPParser::createSoapShapedTree, Texto Excecao: problem creating SOAP tree from bitstream.ParserException
+            (5) - Funcao: ImbXMLNSCParser::parseLastChild, Texto Excecao: XML Parsing Errors have occurred.ParserException
+            (6) - Funcao: ImbXMLNSCDocHandler::handleParseErrors, Texto Excecao: A schema validation error has occurred while parsing the XML document, Texto de Insercao
+              (1) - 6012, Texto de Insercao
+              (2) - 1, Texto de Insercao
+              (3) - 28, Texto de Insercao
+              (4) - 43, Texto de Insercao
+aqui --->     (5) - cvc-enumeration-valid: The value " ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous". It must be a value from the enumeration., Texto de Insercao
+              (6) - /XMLNSC/{http://schemas.xmlsoap.org/soap/envelope/}:Envelope/{http://schemas.xmlsoap.org/soap/envelope/}:Body/{http://caixa.gov.br/sibar/manutencao_cobranca_bancaria/boleto/externo}:SERVICO_ENTRADA/DADOS/INCLUI_BOLETO/TITULO/JUROS_MORA/TIPO.
+              [...]
+```
+
+Neste exemplo, o valor `" ISENTO"` possui um espaço à frente e não é opção
+de valor para este campo:
+
+    The value " ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous"
+
+Outros casos como campos chave não preenchidos, caracteres especiais e
+tipos inválidos são usualmente reportados nesta estrutura.
+
+## Códigos de erro comuns
 
 Tentando complementar as informações do [manual](doc/MO38239.pdf) (pág. 34)
 sobre os códigos de erro mais comuns:
 
-### X5 -- TRANSAÇÃO TEMPORARIAMENTE INDISPONÍVEL
+**(X5) TRANSAÇÃO TEMPORARIAMENTE INDISPONÍVEL**
 
 O sistema da Caixa está indisponível. Isto já ocorreu algumas vezes e deve
 ocorrer novamente sem nenhum tipo de aviso prévio. Se você entrar em contato
 com o HelpDesk eles podem dizer que está tudo bem e que o serviço está
 operante, mas obviamente não está. O melhor a fazer infelizmente é aguardar.
 
-### X5 -- USUARIO NAO AUTORIZADO A EXECUTAR A TRANSACAO
+**(X5) USUARIO NAO AUTORIZADO A EXECUTAR A TRANSACAO**
 
 Quando tem algum algum erro na geração do hash de autenticação, ou a Caixa
 ainda não liberou o CPF ou CNPJ para acesso ao WebService. Verifique no manual
@@ -142,7 +182,7 @@ tamanho correto. Tente também ligar no atendimento da Caixa e perguntar se este
 códigos estão liberados. Alguns casos são resolvidos somente com o Gerente
 da conta.
 
-### 47 -- NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
+**(47) NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO**
 
 O cálculo do hash de autenticação está correto, mas o `NOSSO_NUMERO` consultado
 não consta no convênio informado.
