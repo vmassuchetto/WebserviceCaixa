@@ -148,15 +148,14 @@ no final da mensagem. Tem que inspecionar com paciência.
               (2) - 1, Texto de Insercao
               (3) - 28, Texto de Insercao
               (4) - 43, Texto de Insercao
-aqui --->     (5) - cvc-enumeration-valid: The value " ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous". It must be a value from the enumeration., Texto de Insercao
+aqui --->     (5) - cvc-enumeration-valid: The value "ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous". It must be a value from the enumeration., Texto de Insercao
               (6) - /XMLNSC/{http://schemas.xmlsoap.org/soap/envelope/}:Envelope/{http://schemas.xmlsoap.org/soap/envelope/}:Body/{http://caixa.gov.br/sibar/manutencao_cobranca_bancaria/boleto/externo}:SERVICO_ENTRADA/DADOS/INCLUI_BOLETO/TITULO/JUROS_MORA/TIPO.
               [...]
 ```
 
-Neste exemplo, o valor `" ISENTO"` possui um espaço à frente e não é opção
-de valor para este campo:
+Neste exemplo, o valor `ISENTO` é opção inválida de valor para este campo:
 
-    The value " ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous"
+    The value "ISENTO" is not valid with respect to the enumeration facet for type "#Anonymous"
 
 Outros casos como campos chave não preenchidos, caracteres especiais e
 tipos inválidos são usualmente reportados nesta estrutura.
