@@ -320,60 +320,6 @@ class WebserviceCaixa {
 		return $this->Manutencao($xml_array, 'ALTERA_BOLETO');
 	}
 
-	/**
-	 * Geração dos boletos como exemplo segundo regra específica, deve
-	 * ser alterado de acordo com a necessidade do negócio
-	 *
-	 * Neste exemplo:
-	 *  - se cobrança está registrada e dentro do prazo de validade,
-	 *    somente retorna as informações
-	 *  - se cobrança está registrada e fora do prazo de validade, altera
-	 *    data para hoje sem mudança de valor -- cálculo de juros incidiria
-	 *    nesta situação
-	 *  - realiza a inclusão se a cobrança não está registrada
-	 */
-	function ExemploGeraBoleto() {
-		$this->Consulta($this->args);
-		$codret = $this->GetCodigoRetorno();
-
-		// Boleto registrado
-		if ($codret == 0) {
-			$vencimento = strtotime($consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_VENCIMENTO']);
-
-			// Dentro do prazo, somente retorna informações
-			if ($vencimento >= strtotime('today'))
-				return $consulta;
-
-			$this->args['DATA_VENCIMENTO'] = strtotime('today');
-			$altera = $this->Altera($this->args);
-			if ($this->GetCodigoRetorno() == "0")
-				return $altera;
-
-			/*
-			 * Situações em que se deve registrar um novo nosso número
-			 * e que só são informadas no retorno da requisição de alteração
-			 */
-			$cods = array(
-				"47", // NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
-				"48", // ALTERACAO NAO PERMITIDA - APENAS TITULOS "EM ABERTO" PODEM SER ALTERADOS
-			);
-			if (in_array($altera['COD_RETORNO'], $cods)) {
-				/*
-				$novo_nn = $this->Altera(array('NOSSO_NUMERO' => RotinaQueObtemNovoNossoNumero()));
-				if ($this->GetCodigoRetorno($novo_nn) == 0)
-					return $boleto;
-				*/
-			}
-		}
-
-		// Boleto não registrado
-		if ($codret == 1) {
-			$this->Inclui($this->args);
-			return $this->Consulta($this->args);
-		}
-
-	}
-	
 	/*** Getters ***/
 
 	function GetCodigoRetorno()      { return isset($this->resposta['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO']) ?
