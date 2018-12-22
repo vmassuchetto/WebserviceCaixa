@@ -124,7 +124,7 @@ aqui --->     (5) - cvc-enumeration-valid: The value "ISENTO" is not valid with 
 ```
 
 A parte relevante geralmente fica no final da pilha de rastreamento sinalizada
-pelas sequeências `(1) ... (2) ... (3) ...`
+pelas sequências `(1) ... (2) ... (3) ...`
 
 Neste exemplo, o valor informado para o campo `ISENTO` é inválido dentre
 os valores especificados no manual:
