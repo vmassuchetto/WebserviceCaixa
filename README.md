@@ -27,16 +27,22 @@ os parâmetros especificados no [manual de uso da CEF](http://www.caixa.gov.br/D
 
 ### BoletoPHP
 
-Para utilizar o [BoletoPHP](https://github.com/CobreGratis/boletophp):
+Para utilizar o [BoletoPHP](https://github.com/CobreGratis/boletophp), baixe
+os arquivos necessários:
+
+```sh
+mkdir -p phpboleto/include
+curl -s https://raw.githubusercontent.com/CobreGratis/boletophp/master/boleto_cef.php -o phpboleto/boleto_cef.php
+curl -s https://raw.githubusercontent.com/CobreGratis/boletophp/master/include/funcoes_cef.php -o phpboleto/include/funcoes_cef.php
+```
+
+E no código chame o método `$ws->GeraBoletoPHP()`:
 
 ```php
 include('WebserviceCaixa.php');
 $ws = new WebserviceCaixa($parametros_do_emissor);
 $ws->Inclui($parametros_de_inclusao);
-$this->InformacoesBoleto(); // preenche informações do boleto
-include('./Boleto.php'); // transforma objeto $ws no array $dadosboleto
-include('./boletophp/funcoes_cef_sigcb.php');
-include('./boletophp/layout_cef.php'); // imprime boleto na tela
+$ws->GeraBoletoPHP(); // exibe boleto na tela
 ```
 
 ## Configuração

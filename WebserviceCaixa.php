@@ -80,24 +80,6 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Adiciona informações para impressão do boleto no objeto
-	 */
-	function InformacoesBoleto($resposta) {
-		$this->resposta = array_merge(
-			$this->resposta,
-			array(
-				'CEDENTE' => $this->args['CODIGO_BENEFICIARIO'],
-				'IDENTIFICACAO' => $this->args['IDENTIFICACAO'],
-				'ENDERECO1' => $this->args['ENDERECO1'],
-				'ENDERECO2' => $this->args['ENDERECO2'],
-				'CNPJ' => $this->args['CNPJ'],
-				'UNIDADE' => $this->args['UNIDADE'],
-				'CODIGO_BENEFICIARIO' => $this->args['CODIGO_BENEFICIARIO']
-			)
-		);
-	}
-
-	/**
 	 * Chamada do NuSOAP ao WebService
 	 */
 	function CallNuSOAP($wsdl, $operacao, $conteudo) {
@@ -318,6 +300,69 @@ class WebserviceCaixa {
 		);
 
 		return $this->Manutencao($xml_array, 'ALTERA_BOLETO');
+	}
+
+	/**
+	 * Exibe um boleto em tela usando o BoletoPHP
+	 */
+	function GeraBoletoPHP($resposta) {
+		$this->resposta = array_merge(
+			$this->resposta,
+			array(
+				'CEDENTE' => $this->args['CODIGO_BENEFICIARIO'],
+				'IDENTIFICACAO' => $this->args['IDENTIFICACAO'],
+				'ENDERECO1' => $this->args['ENDERECO1'],
+				'ENDERECO2' => $this->args['ENDERECO2'],
+				'CNPJ' => $this->args['CNPJ'],
+				'UNIDADE' => $this->args['UNIDADE'],
+				'CODIGO_BENEFICIARIO' => $this->args['CODIGO_BENEFICIARIO']
+			)
+		);
+		$dias_de_prazo_para_pagamento = floor((strtotime($this->GetDataVencimento()) - time()) / 60 * 60 * 24);
+		$taxa_boleto = 0;
+		$data_venc = date('d/m/Y', strtotime($this->GetDataVencimento()));
+		$nn = $this->GetNossoNumero();
+		$dadosboleto["nosso_numero_const1"] = substr($nn, 0, 1);
+		$dadosboleto["nosso_numero_const2"] = substr($nn, 1, 1);
+		$dadosboleto["nosso_numero1"] = substr($nn, 2, 3);
+		$dadosboleto["nosso_numero2"] = substr($nn, 5, 3);
+		$dadosboleto["nosso_numero3"] = substr($nn, 8, 9);
+		$valor_cobrado = $this->GetValor();
+		$valor_boleto = number_format($valor_cobrado+$taxa_boleto, 2, ',', '');
+		$dadosboleto["numero_documento"] = $this->GetNumeroDocumento();
+		$dadosboleto["data_vencimento"] = date('d/m/Y', strtotime($this->GetDataVencimento()));
+		$dadosboleto["data_documento"] = date('d/m/Y', strtotime($this->GetDataEmissao()));
+		$dadosboleto["data_processamento"] = date('d/m/Y', strtotime($this->GetDataEmissao()));
+		$dadosboleto["valor_boleto"] = $valor_boleto;
+		$dadosboleto["sacado"] = $this->GetPagadorNome();
+		$dadosboleto["endereco1"] = $this->GetPagadorLogradouro() . ' - ' . $this->GetPagadorBairro();
+		$dadosboleto["endereco2"] = $this->GetPagadorCidade() . ' - ' . $this->GetPagadorUf() . ' CEP: ' . $this->GetPagadorCep();
+		$dadosboleto["demonstrativo1"] = $this->GetMensagem1();
+		$dadosboleto["demonstrativo2"] = $this->GetMensagem2();
+		$dadosboleto["demonstrativo3"] = '';
+		$dadosboleto["instrucoes1"] = $this->GetMensagem1();
+		$dadosboleto["instrucoes2"] = $this->GetMensagem2();
+		$dadosboleto["instrucoes3"] = '';
+		$dadosboleto["instrucoes4"] = '';
+		$dadosboleto["quantidade"] = "";
+		$dadosboleto["valor_unitario"] = "";
+		$dadosboleto["aceite"] = $this->GetFlagAceite();
+		$dadosboleto["especie"] = "R$";
+		$dadosboleto["especie_doc"] = "";
+		$dadosboleto["agencia"] = $this->GetUnidade();
+		$dadosboleto["conta"] = $this->GetCodigoBeneficiario();
+		$dadosboleto["conta_dv"] = '0';
+		$dadosboleto["conta_cedente"] = $this->GetCodigoBeneficiario();
+		$dadosboleto["carteira"] = 'RG';
+		$cnpj = $this->GetCnpj();
+		$dadosboleto["identificacao"] = $this->GetIdentificacao();
+		$dadosboleto["cpf_cnpj"] = substr($cnpj, 1, 2) . '.' . substr($cnpj, 3, 3) . '.' . substr($cnpj, 6, 3) . '/' . substr($cnpj, 9, 4) . '-' . substr($cnpj, 13, 2);
+		$dadosboleto["endereco"] = $this->GetEndereco1();
+		$dadosboleto["cidade_uf"] = $this->GetEndereco2();
+		$dadosboleto["cedente"] = $this->GetCedente();
+		include('./boletophp/include/funcoes_cef_sigcb.php');
+		include('./boletophp/layout_cef.php'); // imprime boleto na tela
+		exit();
 	}
 
 	/*** Getters ***/
