@@ -6,33 +6,14 @@
  *
  *   /
  *     |-- /lib                   Bibliotecas utilizadas
- *     |-- /xml                   Arquivos WSDL e XSD enviados pela CEF
  *     |-- WebserviceCaixa.php    Biblioteca
- *
- * Exemplo de uso:
- *
- * include('WebserviceCaixa/WebserviceCaixa.php');
- * $ws = new WebserviceCaixa($array_de_argumentos);
- * $ws->Consulta(); $ws->Gera();
- *
  */
-
-define('RETRIES',  20);                 // número de tentativas de conexão com o WS antes de falhar
-define('TIMEOUT',  5);                  // timeout para desistir da resposta
-define('INTERVAL', 1.5);                // intervalo entre tentativas
-
-// informações que serão impressas no cabeçalho do boleto
-define('CEDENTE', 'NOME DO CEDENTE');
-define('IDENTIFICACAO', 'IDENTIFICACAO DO CEDENTE NO CABECALHO');
-define('CNPJ', '999999999999999');
-define('ENDERECO1', 'PRIMEIRA LINHA DE ENDERECO');
-define('ENDERECO2', 'SEGUNDA LINHA DE ENDERECO');
-
-define('UNIDADE', '9999');			// código de agência de relacionamento
-
-define('HASH_DEBUG', 'HASH SECRETO PARA DEBUG'); // exibe informações do boleto quando `?hash=` é informado
-
-define('DIR', 'WebserviceCaixa'); // diretório do servidor em que este arquivo é colocado
+$config_file = dirname(__FILE__) . '/Config.php';
+if (is_file($config_file)) {
+	include($config_file);
+} else {
+	include(dirname(__FILE__) . '/ConfigPadrao.php');
+}
 
 include(dirname(__FILE__) . '/lib/nusoap/lib/nusoap.php');
 include(dirname(__FILE__) . '/lib/XmlDomConstruct.php');
@@ -41,36 +22,36 @@ class WebserviceCaixa {
 
 	var $args;
 	var $consulta;
+	var $resposta;
+	var $nusoap;
 
 	/**
 	 * Construtor atribui e formata parâmetros em $this->args
 	 */
-	function __construct($args) {
+	function __construct($args = array()) {
+		$this->resposta = array();
 
-		// Ambiente de desenvolvimento ou $_GET['DEBUG'] informado adequadamente
-		$this->dev = isset($_GET['DEBUG']) && ($_GET['DEBUG'] == HASH_DEBUG);
-		
+		set_error_handler(array($this, 'ErrorHandler'));
+
 		// Localização HTTP dos arquivos WSDL
-		$this->wsdl_consulta = $this->GetBaseUrl() . DIR . '/xml/Consulta_Cobranca_Bancaria_Boleto.wsdl';
-		$this->wsdl_manutencao = $this->GetBaseUrl() . DIR . '/xml/Manutencao_Cobranca_Bancaria_Externo.wsdl';
+		// A URL de desenvolvimento parece ter sido desativada pela CEF
+		$base_url = 'https://barramento.caixa.gov.br';
+		$this->wsdl_consulta = $base_url . '/sibar/ConsultaCobrancaBancaria/Boleto/Externo?wsdl';
+		$this->wsdl_manutencao = $base_url . '/sibar/ManutencaoCobrancaBancaria/Boleto/Externo?wsdl';
 
-		// Campos padrões
-		$padroes = array(
-			'IDENTIFICADOR_ORIGEM' => $_SERVER['REMOTE_ADDR'],
-			'UNIDADE' => UNIDADE
-		);
-		
-		$this->args = $this->CleanArray(array_merge($padroes,$args));
-		
-		// Informações acessíveis aos getters
-		$this->consulta['CEDENTE'] = CEDENTE;
-		$this->consulta['IDENTIFICACAO'] = IDENTIFICACAO;
-		$this->consulta['ENDERECO1'] = ENDERECO1;
-		$this->consulta['ENDERECO2'] = ENDERECO2;
-		$this->consulta['CNPJ'] = CNPJ;
-		$this->consulta['UNIDADE'] = $this->args['UNIDADE'];
-		$this->consulta['CODIGO_BENEFICIARIO'] = $this->args['CODIGO_BENEFICIARIO'];
-		$this->consulta['NOSSO_NUMERO'] = $this->args['NOSSO_NUMERO'];
+		$this->args = $this->CleanArray($args);
+	}
+
+	function __destruct() {
+		restore_error_handler();
+	}
+
+	/**
+	 * Remove warning específico do Nusoap
+	 */
+	function ErrorHandler($errno, $errstr, $errfile, $errline) {
+		if (!(false !== strpos($errfile, 'lib/nusoap/lib/nusoap.php') && $errline == 4694))
+			echo("Warning: " . $errstr . " in " . $errfile . ":" . $errline . "\n");
 	}
 
 	/**
@@ -98,125 +79,44 @@ class WebserviceCaixa {
 		return preg_replace('/[^0-9A-Za-z;,.\- ]/', '', strtoupper(strtr(trim($str), $replaces)));
 	}
 
-	function GetBaseUrl() {
-		return sprintf(
-			"%s://%s",
-			isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
-			$_SERVER['SERVER_NAME']
+	/**
+	 * Adiciona informações para impressão do boleto no objeto
+	 */
+	function InformacoesBoleto($resposta) {
+		$this->resposta = array_merge(
+			$this->resposta,
+			array(
+				'CEDENTE' => $this->args['CODIGO_BENEFICIARIO'],
+				'IDENTIFICACAO' => $this->args['IDENTIFICACAO'],
+				'ENDERECO1' => $this->args['ENDERECO1'],
+				'ENDERECO2' => $this->args['ENDERECO2'],
+				'CNPJ' => $this->args['CNPJ'],
+				'UNIDADE' => $this->args['UNIDADE'],
+				'CODIGO_BENEFICIARIO' => $this->args['CODIGO_BENEFICIARIO']
+			)
 		);
 	}
 
 	/**
-	 * Formata uma mensagem de erro na tela
-	 *
-	 * @param $txt Exibido ao usuário
-	 * @param $log Exibido ao desenvolvedor quando em ambiente de
-	 *             desenvolvimento ou quando $_GET['DEBUG'] é passado
-	 *             adequadamente
-	 */
-	function ExibeErro($txt = '') {
-		if ($txt == 'INDISP') {
-			$txt = 'O sistema de boletos da Caixa Econômica Federal encontra-se indisponível. Tente acessar o link mais tarde.';
-		} else if ($txt == '') {
-			$txt = "Houve um erro ao gerar o boleto. Por favor, visite esta página mais tarde.";
-		}
-		if ($this->dev) {
-			ob_start();
-			print_r($this);
-			$_this = ob_get_clean();
-		}
-		?>
-		<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-		<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml">
-		<head><style type="text/css">
-			pre { background-color: #EAEAEA; padding: 10px; }
-			.mensagem { font-family: Arial; font-size: 16px; padding: 20px; background-color: #595150; color: white; opacity: 0.83; transition: opacity 0.6s; margin-bottom: 15px; }
-			.mensagem a { color: white; }
-		</style></head>
-		<body>
-			<div class="mensagem"><?php echo $txt; ?></div>
-			<?php if ($this->dev && $_this) : ?><pre><?php echo $_this; ?></pre><?php endif; ?>
-		</body></html>
-		<?php
-		exit();
-	}
-
-	/**
-	 * Encapsulamento da chamada do NuSOAP ao WebService
-	 *
-	 * Devido à instabilidade do serviço, faz consultas repetidas até o
-	 * número de tentativas definido em RETRIES. Deve ser usado ao invés do
-	 * método `nusoap_client->call` da biblioteca.
+	 * Chamada do NuSOAP ao WebService
 	 */
 	function CallNuSOAP($wsdl, $operacao, $conteudo) {
-		$client = new nusoap_client($wsdl, $wsdl = true, $timeout = TIMEOUT);
-		// @TODO implementar consulta com certificado
-		$client->curl_options = array('insecure' => true);
-		$done = false;
-		$retries = 0;
+		$client = new nusoap_client($wsdl, true, $timeout = TIMEOUT);
 
-		while (!$done) {		
-			if (++$retries > RETRIES)
-				$this->ExibeErro('INDISP');
+		$response = $client->call($operacao, $conteudo, RETRIES);
+		$err = $client->getError();
 
-			$response = $client->call($operacao, $conteudo, $retries);
-			$err = $client->getError();
-
-			if ($this->dev)
-				$this->debug['RETORNO_CAIXA'][] = array(
-					'ERRO' => $err,
-					'RESPOSTA' => htmlspecialchars($client->response)
-				);
-
-			if (!$client->fault && !$err) {
-				$done = true;
-			} else {
-				sleep(INTERVAL);
-			}
+		if ($err) {
+			print_r($client);
+			trigger_error($err);
+			$this->nusoap = array(
+				'MENSAGEM' => $err,
+				'RESPOSTA' => htmlspecialchars($client->response)
+			);
 		}
 
-		return $response;
-	}
-
-	/**
-	 * Faz a chamada ao WebService verificando as mensagens de erro
-	 * documentadas no manual.
-	 *
-	 * Código de retorno '02' são erros indisponibilidade na ponta (Pág. 35)
-	 *
-	 * Demais códigos de retorno (Págs. 33 a 35) devem ser checados pela
-	 * rotina que invoca este método
-	 */
-	function Call($wsdl, $operacao, $conteudo) {
-		$response = $this->CallNusoap($wsdl, $operacao, $conteudo);
-		$codret = $this->GetCodigoRetorno($response);
-
-		// Código 0 = operação efetuada
-		if ($codret === '0')
-			return $response;
-
-		/* Erros próprios de sistema (Pág. 35) que acarretam em erros fatais
-		 *   - Código 02 = sistema indisponível
-		 *   - Código X5 = formatação de mensagem
-		 */
-		$cod_erros = array('02', 'X5');
-		if (isset($response['COD_RETORNO']) && in_array($response['COD_RETORNO'], $cod_erros)) {
-			$this->ExibeErro('INDISP');
-		}
-
-		/* Erros de negócio (Págs. 33 a 35) que devem ser tratados pela
-		 * rotina que invoca esta chamada
-		 */
-		if (isset($response['DADOS']['CONTROLE_NEGOCIAL']['MENSAGENS']['RETORNO'])) {
-			if (preg_match('/\((.+)\).*/', $response['DADOS']['CONTROLE_NEGOCIAL']['MENSAGENS']['RETORNO'], $m)) {
-				$response['COD_RETORNO'] = $m[1];
-				$response['MSG_RETORNO'] = $response['DADOS']['CONTROLE_NEGOCIAL']['MENSAGENS']['RETORNO'];
-
-				return $response;
-			}
-		}
-
-		$this->ExibeErro('INDISP');
+		$this->consulta = $client->request;
+		$this->resposta = $response;
 	}
 
 	/**
@@ -230,7 +130,7 @@ class WebserviceCaixa {
 				sprintf('%08d', 0) :
 				strftime('%d%m%Y', strtotime($args['DATA_VENCIMENTO']))) .
 			sprintf('%015d', preg_replace('/[^0-9]/', '', $args['VALOR'])) .
-			sprintf('%014d', CNPJ));
+			sprintf('%014d', $this->args['CNPJ']));
 		return base64_encode(hash('sha256', $raw, true));
 	}
 
@@ -240,8 +140,8 @@ class WebserviceCaixa {
 	function ConsultaXML($args) {
 		$xml_root = 'consultacobrancabancaria:SERVICO_ENTRADA';
 		$xml = new XmlDomConstruct('1.0', 'iso-8859-1');
-		$xml->preserveWhiteSpace = !$this->dev;
-		$xml->formatOutput = $this->dev;
+		$xml->preserveWhiteSpace = !DESENVOLVIMENTO;
+		$xml->formatOutput = DESENVOLVIMENTO;
 		$xml->fromMixed(array($xml_root => $args));
 		$xml_root_item = $xml->getElementsByTagName($xml_root)->item(0);
 		$xml_root_item->setAttribute('xmlns:consultacobrancabancaria',
@@ -276,13 +176,11 @@ class WebserviceCaixa {
 			'sibar_base:HEADER' => array(
 				'VERSAO' => '1.0',
 				'AUTENTICACAO' => $autenticacao,
-				'USUARIO_SERVICO' => 'SGCBS02P',
+				'USUARIO_SERVICO' => DESENVOLVIMENTO ? 'SGCBS01D' : 'SGCBS02P',
 				'OPERACAO' => 'CONSULTA_BOLETO',
 				'SISTEMA_ORIGEM' => 'SIGCB',
 				'UNIDADE' => $args['UNIDADE'],
-				'IDENTIFICADOR_ORIGEM' => $args['IDENTIFICADOR_ORIGEM'],
 				'DATA_HORA' => date('YmdHis'),
-				'ID_PROCESSO' => $args['ID_PROCESSO']
 			),
 			'DADOS' => array(
 				'CONSULTA_BOLETO' => array(
@@ -292,9 +190,7 @@ class WebserviceCaixa {
 			)
 		);
 
-		$this->consulta = array_merge($this->consulta, $this->Call($this->wsdl_consulta, 'CONSULTA_BOLETO', $this->ConsultaXml($xml_array)));
-
-		return $this->consulta;
+		$this->CallNuSOAP($this->wsdl_consulta, 'CONSULTA_BOLETO', $this->ConsultaXml($xml_array));
 	}
 
 	/**
@@ -305,8 +201,8 @@ class WebserviceCaixa {
 	function ManutencaoXml($args) {
 		$xml_root = 'manutencaocobrancabancaria:SERVICO_ENTRADA';
 		$xml = new XmlDomConstruct('1.0', 'iso-8859-1');
-		$xml->preserveWhiteSpace = !$this->dev;
-		$xml->formatOutput = $this->dev;
+		$xml->preserveWhiteSpace = !DESENVOLVIMENTO;
+		$xml->formatOutput = DESENVOLVIMENTO;
 		$xml->fromMixed(array($xml_root => $args));
 		$xml_root_item = $xml->getElementsByTagName($xml_root)->item(0);
 		$xml_root_item->setAttribute('xmlns:manutencaocobrancabancaria',
@@ -328,7 +224,7 @@ class WebserviceCaixa {
 	 */
 	function Manutencao($xml_array, $operacao) {
 
-		return $this->Call($this->wsdl_manutencao, $operacao, $this->ManutencaoXml($xml_array));
+		$this->CallNuSOAP($this->wsdl_manutencao, $operacao, $this->ManutencaoXml($xml_array));
 	}
 
 	/**
@@ -342,13 +238,11 @@ class WebserviceCaixa {
 			'sibar_base:HEADER' => array(
 				'VERSAO' => '1.0',
 				'AUTENTICACAO' => $this->HashAutenticacao($args),
-				'USUARIO_SERVICO' => 'SGCBS02P',
+				'USUARIO_SERVICO' => DESENVOLVIMENTO ? 'SGCBS01D' : 'SGCBS02P',
 				'OPERACAO' => 'INCLUI_BOLETO',
 				'SISTEMA_ORIGEM' => 'SIGCB',
 				'UNIDADE' => $args['UNIDADE'],
-				'IDENTIFICADOR_ORIGEM' => OUT_IP,
 				'DATA_HORA' => date('YmdHis'),
-				'ID_PROCESSO' => $args['ID_PROCESSO'],
 			),
 			'DADOS' => array(
 				'INCLUI_BOLETO' => array(
@@ -392,13 +286,11 @@ class WebserviceCaixa {
 			'sibar_base:HEADER' => array(
 				'VERSAO' => '1.0',
 				'AUTENTICACAO' => $this->HashAutenticacao($args),
-				'USUARIO_SERVICO' => 'SGCBS02P',
+				'USUARIO_SERVICO' => DESENVOLVIMENTO ? 'SGCBS01D' : 'SGCBS02P',
 				'OPERACAO' => 'ALTERA_BOLETO',
 				'SISTEMA_ORIGEM' => 'SIGCB',
 				'UNIDADE' => $args['UNIDADE'],
-				'IDENTIFICADOR_ORIGEM' => OUT_IP,
 				'DATA_HORA' => date('YmdHis'),
-				'ID_PROCESSO' => $args['ID_PROCESSO'],
 			),
 			'DADOS' => array(
 				'ALTERA_BOLETO' => array(
@@ -429,71 +321,6 @@ class WebserviceCaixa {
 	}
 
 	/**
-	 * Obtém o código de retorno com o status das respostas do webservice
-	 */
-	function GetCodigoRetorno($response) {
-		if (isset($response['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO']))
-			return intval($response['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO']);
-
-		return null;
-	}
-
-	/**
-	 * Obtém url para impressão do boleto
-	 */
-	function GetUrlBoleto($response) {
-		if (isset($response['DADOS']['CONSULTA_BOLETO']['TITULO']['URL']))
-			return $response['DADOS']['CONSULTA_BOLETO']['TITULO']['URL'];
-		if (isset($response['DADOS']['ALTERA_BOLETO']['URL']))
-			return $response['DADOS']['ALTERA_BOLETO']['URL'];
-
-		return null;
-	}
-
-	/**
-	 * Verifica se o link está funcional
-	 */
-	function ChecaUrl($url) {
-		$headers = get_headers($url);
-		if (preg_match('/HTTP\/1.1 500.*/', $headers[0]))
-			$this->ExibeErro('Boleto indisponível. Não foi possível recuperar o <a target="_blank" href="' . $url . '">link de impressão</a> da CEF.');
-	}
-
-	/**
-	 * Wrapper para geração de boletos que deve ser utilizada externamente
-	 * regida por $args['FORMATO_RETORNO']
-	 *     - ARRAY retorna informações do boleto em vetor associativo
-	 *     - REDIRECIONAMENTO envia o usuário para o PDF da Caixa na fonte
-	 *     - URL string da url do boleto da Caixa
-	 *     - DADOS string de dados binários do boleto da Caixa
-	 */
-	function Gera() {
-		$boleto = $this->GeraBoleto();
-
-		if (!$url = $this->GetUrlBoleto($boleto))
-			$this->ExibeErro('Boleto falhou ao ser gerado.');
-
-		switch ($this->args['FORMATO_RETORNO']) {
-			case 'ARRAY':
-				return $boleto;
-				break;
-			case 'REDIRECIONAMENTO':
-				$this->ChecaUrl($url);
-				header('Location:' . $url);
-				exit();
-				break;
-			case 'URL':
-				$this->ChecaUrl($url);
-				return $url;
-				break;
-			case 'DADOS':
-				$this->ChecaUrl($url);
-				return file_get_contents($url);
-				break;
-		}
-	}
-
-	/**
 	 * Geração dos boletos como exemplo segundo regra específica, deve
 	 * ser alterado de acordo com a necessidade do negócio
 	 *
@@ -505,9 +332,9 @@ class WebserviceCaixa {
 	 *    nesta situação
 	 *  - realiza a inclusão se a cobrança não está registrada
 	 */
-	function GeraBoleto() {
-		$consulta = $this->Consulta($this->args);
-		$codret = $this->GetCodigoRetorno($consulta);
+	function ExemploGeraBoleto() {
+		$this->Consulta($this->args);
+		$codret = $this->GetCodigoRetorno();
 
 		// Boleto registrado
 		if ($codret == 0) {
@@ -519,7 +346,7 @@ class WebserviceCaixa {
 
 			$this->args['DATA_VENCIMENTO'] = strtotime('today');
 			$altera = $this->Altera($this->args);
-			if ($this->GetCodigoRetorno($altera) == 0)
+			if ($this->GetCodigoRetorno() == "0")
 				return $altera;
 
 			/*
@@ -527,8 +354,8 @@ class WebserviceCaixa {
 			 * e que só são informadas no retorno da requisição de alteração
 			 */
 			$cods = array(
-				47, // NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
-				48, // ALTERACAO NAO PERMITIDA - APENAS TITULOS "EM ABERTO" PODEM SER ALTERADOS
+				"47", // NOSSO NUMERO NAO CADASTRADO PARA O BENEFICIARIO
+				"48", // ALTERACAO NAO PERMITIDA - APENAS TITULOS "EM ABERTO" PODEM SER ALTERADOS
 			);
 			if (in_array($altera['COD_RETORNO'], $cods)) {
 				/*
@@ -548,34 +375,48 @@ class WebserviceCaixa {
 	}
 	
 	/*** Getters ***/
-	
-	function GetCedente()            { return $this->consulta['CEDENTE']; }
-	function GetIdentificacao()      { return $this->consulta['IDENTIFICACAO']; }
-	function GetCnpj()               { return $this->consulta['CNPJ']; }
-	function GetEndereco1()          { return $this->consulta['ENDERECO1']; }
-	function GetEndereco2()          { return $this->consulta['ENDERECO2']; }
-	function GetUnidade()            { return $this->consulta['UNIDADE']; }
-	function GetCodigoBeneficiario() { return $this->consulta['CODIGO_BENEFICIARIO']; }
-	function GetDataEmissao()        { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_EMISSAO']; }
-	function GetDataVencimento()     { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_VENCIMENTO']; }
-	function GetValor()              { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['VALOR']; }
-	function GetNossoNumero()        { return $this->consulta['NOSSO_NUMERO']; }
-	function GetNumeroDocumento()    { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['NUMERO_DOCUMENTO']; }
+
+	function GetCodigoRetorno()      { return isset($this->resposta['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO']) ?
+													$this->resposta['DADOS']['CONTROLE_NEGOCIAL']['COD_RETORNO'] : 
+													isset($this->resposta['COD_RETORNO']) ?
+														  $this->resposta['COD_RETORNO'] : null; }
+	function GetMensagemRetorno()    { return isset($this->resposta['DADOS']['CONTROLE_NEGOCIAL']['MSG_RETORNO']) ?
+													$this->resposta['DADOS']['CONTROLE_NEGOCIAL']['MSG_RETORNO'] : 
+													isset($this->resposta['MSG_RETORNO']) ?
+													      $this->resposta['MSG_RETORNO'] : null; }
+	function GetUrlBoleto()          { return isset($this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['URL']) ?
+									   			    $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['URL'] :
+									  			  	isset($this->resposta['DADOS']['ALTERA_BOLETO']['URL']) ?
+															$this->resposta['DADOS']['ALTERA_BOLETO']['URL'] : null; }
+    function GetExcecao()            { return isset($this->resposta['DADOS']['EXCECAO']) ?
+									   			    $this->resposta['DADOS']['EXCECAO'] : null; }
+	function GetCedente()            { return $this->resposta['CEDENTE']; }
+	function GetIdentificacao()      { return $this->resposta['IDENTIFICACAO']; }
+	function GetCnpj()               { return $this->resposta['CNPJ']; }
+	function GetEndereco1()          { return $this->resposta['ENDERECO1']; }
+	function GetEndereco2()          { return $this->resposta['ENDERECO2']; }
+	function GetUnidade()            { return $this->resposta['UNIDADE']; }
+	function GetCodigoBeneficiario() { return $this->resposta['CODIGO_BENEFICIARIO']; }
+	function GetDataEmissao()        { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_EMISSAO']; }
+	function GetDataVencimento()     { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['DATA_VENCIMENTO']; }
+	function GetValor()              { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['VALOR']; }
+	function GetNossoNumero()        { return $this->resposta['NOSSO_NUMERO']; }
+	function GetNumeroDocumento()    { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['NUMERO_DOCUMENTO']; }
 	function GetFlagAceite()         { return $this->args['FLAG_ACEITE']; }
-	function GetPagadorNome()        { return (isset($this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['NOME'])) ?
-													 $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['NOME'] :
-													 $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['RAZAO_SOCIAL']; }
-	function GetPagadorNumero()      { return (isset($this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CPF'])) ?
-                                                     $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CPF'] :
-													 $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CNPJ']; }
-	function GetPagadorLogradouro()  { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['LOGRADOURO']; }
-	function GetPagadorCidade()      { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['CIDADE']; }
-	function GetPagadorBairro()      { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['BAIRRO']; }
-	function GetPagadorUf()          { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['UF']; }
-	function GetPagadorCep()         { return $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['CEP']; }
-	function GetMensagem1()          { return (is_array($this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'])) ?
-                                                        $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'][0] :
-                                                        $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'] ; }
-	function GetMensagem2()          { return (is_array($this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'])) ?
-                                                        $this->consulta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'][1] : '' ; }
+	function GetPagadorNome()        { return (isset($this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['NOME'])) ?
+													 $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['NOME'] :
+													 $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['RAZAO_SOCIAL']; }
+	function GetPagadorNumero()      { return (isset($this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CPF'])) ?
+                                                     $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CPF'] :
+													 $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['CNPJ']; }
+	function GetPagadorLogradouro()  { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['LOGRADOURO']; }
+	function GetPagadorCidade()      { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['CIDADE']; }
+	function GetPagadorBairro()      { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['BAIRRO']; }
+	function GetPagadorUf()          { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['UF']; }
+	function GetPagadorCep()         { return $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['PAGADOR']['ENDERECO']['CEP']; }
+	function GetMensagem1()          { return (is_array($this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'])) ?
+                                                        $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'][0] :
+                                                        $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'] ; }
+	function GetMensagem2()          { return (is_array($this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'])) ?
+                                                        $this->resposta['DADOS']['CONSULTA_BOLETO']['TITULO']['FICHA_COMPENSACAO']['MENSAGENS']['MENSAGEM'][1] : '' ; }
 }
