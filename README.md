@@ -3,6 +3,16 @@
 Acesso às operações básicas de consulta, inclusão e alteração
 de cobranças registradas no Webservice da Caixa Econômica Federal.
 
+:bomb: **Atenção. Versão não testada.**
+
+Utilize o branch `0.x` para a versão estabilizada anterior.
+
+    git checkout 0.x
+
+Preciso de ajuda para testar o branch `master` pois não mais tenho acesso
+à uma conta de beneficiário da Caixa. Issues com uma [sequência de
+depuração](#depura%C3%A7%C3%A3o) são bem-vindas.
+
 ## Modo de uso
 
 ```php
